@@ -7,7 +7,7 @@ import sys
 
 from dims import Dims 
 
-sys.setrecursionlimit(3000)
+# sys.setrecursionlimit(3000)
 
 def getDimsFromBox(box):
     axisInserts = [vent for vent in box.virtual_entities() 
@@ -192,24 +192,23 @@ def getInsertCenter(insert):
         
     else:
         block = insert.block()
-        if block_name == '통기 PD PS Ø150':
-            print([vent for vent in insert.virtual_entities()])
+        # if block_name == '통기 PD PS Ø150':
+            # print([vent for vent in insert.virtual_entities()])
         vents = [vent for vent in insert.virtual_entities() 
                  if type(vent) != ezdxf.entities.insert.Insert and
                  type(vent) != ezdxf.entities.circle.Circle and 
                  type(vent) in centerFunctions]
-        if block_name == '통기 PD PS Ø150':
-            print(vents)
+        # if block_name == '통기 PD PS Ø150':
+            # print(vents)
 
         if len(vents):
             if len(vents)>25:
                 vents = random.choices(vents, k=24)
             point = sum([getHypoCenter(vent) for vent in vents])/len(vents)
         else:
-            
             insertsInBlock = [ent for ent in block.entity_space.entities if type(ent) == ezdxf.entities.insert.Insert]
-            if block_name == '통기 PD PS Ø150':
-                print(insertsInBlock)
+            # if block_name == '통기 PD PS Ø150':
+                # print(insertsInBlock)
             for ins in insertsInBlock:
                 ins.explode()
             point = getInsertCenter(insert)
@@ -301,27 +300,33 @@ def makeFloorBlocks(filename):
     
     
     form_dict, space_map = getFormDictAndIndex(forms)
-    for i in range(len(form_dict)):
-        getFloorOriginPoint(form_dict, i)
-    
+
     floor_dict = {}
+    
+    for i in range(len(form_dict)):
+        floor_name = getFloorName(form_dict, i)
+        floor_origin_point = getFloorOriginPoint(form_dict, i, '1', 'F')
+        floor_dict[floor_name] = {
+            'origin_point': floor_origin_point
+        }
+    
     for ent in ents:
         form_idxes = getIntersectingForms(ent, space_map)
         if len(form_idxes)==1:
-            floor_name = getFloorName(form_dict, form_idxes[0])
+            intersecting_floor_name = getFloorName(form_dict, form_idxes[0])
             
-            if floor_name not in floor_dict:
-                floor_dict[floor_name] = [ent]
+            if 'entities' in floor_dict[intersecting_floor_name]:
+                floor_dict[intersecting_floor_name]['entities'].append(ent)
             else:
-                floor_dict[floor_name].append(ent)
-        else:
-            print(ent)
-            print(form_idxes)
-            print(ent.dxfattribs())
+                floor_dict[intersecting_floor_name]['entities'] = [ent]
+        # else:
+            # print(ent)
+            # print(form_idxes)
+            # print(ent.dxfattribs())
     
-    for floor_name, floor_entities in floor_dict.items():
-        floor_block = doc.blocks.new(name=floor_name)
-        for ent in floor_entities:
+    for floor_name, floor_data in floor_dict.items():
+        floor_block = doc.blocks.new(name=floor_name, base_point=floor_data['origin_point'])
+        for ent in floor_data['entities']:
             
             if checkEntityGo(ent):
                 msp.unlink_entity(ent)
@@ -329,7 +334,7 @@ def makeFloorBlocks(filename):
             else:
                 msp.unlink_entity(ent)
                 
-        msp.add_blockref(floor_name, (0,0))
+        msp.add_blockref(floor_name, floor_data['origin_point'])
     doc.saveas('_fl_blocks.'.join(filename.split('.')))
 
 leftover = []
