@@ -1,13 +1,18 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d6e63b9324833cd32752e667287b9a320ae79cd64906c1c06b61888e5fa8e831"
+            "sha256": "2769a7df0dffe0ee2f595e363f750edf0eb92fc9e25b4022f9be5c849457bcc1"
         },
         "pipfile-spec": 6,
         "requires": {
             "python_version": "3.7"
         },
         "sources": [
+            {
+                "name": "pypi",
+                "url": "http://mirror.kakao.com/pypi/simple/",
+                "verify_ssl": true
+            },
             {
                 "name": "pypi",
                 "url": "https://pypi.python.org/simple",
