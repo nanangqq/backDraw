@@ -131,9 +131,16 @@ def getPolylinePoint(pl):
     if 'const_width' in pl.dxfattribs():
         pl.set_dxf_attrib('const_width', 0)
         
-    vents = [vent for vent in pl.virtual_entities() if type(vent) in centerFunctions]
+    vents = [vent for vent in pl.virtual_entities() if type(vent) in centerFunctions and type(vent) != ezdxf.entities.arc.Arc]
     if len(vents)>25:
         vents = random.choices(vents, k=24)
+    elif len(vents)==0:
+        # print(pl.dxfattribs())
+        verts = [ezdxf.math.Vector(v) for v in pl.vertices()]
+            # print(v)
+            # print(type(v))
+            # print(ezdxf.math.Vector(v))
+        return sum(verts)/len(verts)
     return sum([getHypoCenter(vent) for vent in vents])/len(vents)
 
 centerFunctions[ezdxf.entities.lwpolyline.LWPolyline] = getPolylinePoint
@@ -197,6 +204,7 @@ def getInsertCenter(insert):
         vents = [vent for vent in insert.virtual_entities() 
                  if type(vent) != ezdxf.entities.insert.Insert and
                  type(vent) != ezdxf.entities.circle.Circle and 
+                 type(vent) != ezdxf.entities.arc.Arc and 
                  type(vent) in centerFunctions]
         # if block_name == '통기 PD PS Ø150':
             # print(vents)
@@ -216,8 +224,15 @@ def getInsertCenter(insert):
         point_from_block_origin = point - insert_point
         blockPointFromOrigin[block_name] = point_from_block_origin
 
-        block.add_point(point_from_block_origin)
-        
+    #     block.add_point(point_from_block_origin)
+    #     block.add_text(block_name, {'insert':point_from_block_origin, 'height': 200})
+
+    # block_points.append({
+    #     'block_name': block_name,
+    #     'point': point
+    # })
+
+
     return point
 
 centerFunctions[ezdxf.entities.insert.Insert] = getInsertCenter
@@ -335,9 +350,16 @@ def makeFloorBlocks(filename):
                 msp.unlink_entity(ent)
                 
         msp.add_blockref(floor_name, floor_data['origin_point'])
+    
+    # print(len(block_points))
+    # for block_point in block_points:
+    #     msp.add_point(block_point['point'])
+    #     msp.add_text(block_point['block_name'], {'insert':block_point['point'], 'height': 200})
+
     doc.saveas('_fl_blocks.'.join(filename.split('.')))
 
 leftover = []
 leftpaths = []
+block_points = []
 form_block_name = 'plan_dim_box'
 makeFloorBlocks('data/20210409_plans.dxf')
