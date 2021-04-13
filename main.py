@@ -356,7 +356,9 @@ def makeFloorBlocks(filename):
     #     msp.add_point(block_point['point'])
     #     msp.add_text(block_point['block_name'], {'insert':block_point['point'], 'height': 200})
 
-    doc.saveas('_fl_blocks.'.join(filename.split('.')))
+
+    output_file_name = '_fl_blocks.'.join(filename.split('.'))
+    doc.saveas(output_file_name)
 
 leftover = []
 leftpaths = []
