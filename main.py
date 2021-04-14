@@ -5,6 +5,7 @@ import numpy as np
 import random
 from sys import argv
 import os
+import json
 
 from dims import Dims 
 
@@ -43,8 +44,8 @@ def getBlockNameAndInsertPointAndAttrs(insert):
         return attr['name'], attr['insert'], {k:v for k, v in attr.items() if k not in ['name', 'insert', 'handle', 'owner']}
 
 
-def read_dxf(filename):
-    doc = ezdxf.readfile(filename)
+def read_dxf(path):
+    doc = ezdxf.readfile(path)
     msp = doc.modelspace()
     ents = msp.entity_space.entities
     return doc, msp, ents
@@ -309,8 +310,10 @@ def checkEntityGo(ent):
         else:
             return True
 
-def makeFloorBlocks(filename):
-    doc, msp, ents = read_dxf(filename)
+def makeFloorBlocks(params):
+    data_path = params['filePath']
+    raw_file_name = params['fileName']
+    doc, msp, ents = read_dxf(data_path)
 
     forms = filterForms(ents, form_block_name)
     
@@ -358,9 +361,11 @@ def makeFloorBlocks(filename):
     #     msp.add_text(block_point['block_name'], {'insert':block_point['point'], 'height': 200})
 
 
-    output_file_name = '_fl_blocks.'.join(filename.split('.'))
-    doc.saveas(output_file_name)
-    return output_file_name
+    output_file_name = '_fl_blocks.'.join(raw_file_name.split('.'))
+    static_dir = 'static'
+    output_file_path = os.path.join(static_dir, output_file_name)
+    doc.saveas(output_file_path)
+    return output_file_path.replace('static', 'files')
 
 # def main():
 leftover = []
@@ -369,7 +374,11 @@ block_points = []
 form_block_name = 'plan_dim_box'
 filepath = 'data/20210409_plans.dxf'
 
-print(makeFloorBlocks(os.path.join(os.path.dirname(argv[0]), filepath)))
+# print(makeFloorBlocks(os.path.join(os.path.dirname(argv[0]), filepath)))
+params = json.loads(argv[1])
+# print(params)
+
+print(makeFloorBlocks(params))
 
 # if __name__=='__main__':
 #     main()
