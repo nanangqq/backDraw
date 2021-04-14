@@ -3,7 +3,8 @@ from rtree import index
 import math
 import numpy as np
 import random
-import sys
+from sys import argv
+import os
 
 from dims import Dims 
 
@@ -359,9 +360,16 @@ def makeFloorBlocks(filename):
 
     output_file_name = '_fl_blocks.'.join(filename.split('.'))
     doc.saveas(output_file_name)
+    return output_file_name
 
+# def main():
 leftover = []
 leftpaths = []
 block_points = []
 form_block_name = 'plan_dim_box'
-makeFloorBlocks('data/20210409_plans.dxf')
+filepath = 'data/20210409_plans.dxf'
+
+print(makeFloorBlocks(os.path.join(os.path.dirname(argv[0]), filepath)))
+
+# if __name__=='__main__':
+#     main()
