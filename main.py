@@ -343,6 +343,8 @@ def makeFloorBlocks(params):
             # print(form_idxes)
             # print(ent.dxfattribs())
     
+    wb_script = []
+
     for floor_name, floor_data in floor_dict.items():
         floor_block = doc.blocks.new(name=floor_name, base_point=floor_data['origin_point'])
         for ent in floor_data['entities']:
@@ -354,6 +356,11 @@ def makeFloorBlocks(params):
                 msp.unlink_entity(ent)
                 
         msp.add_blockref(floor_name, floor_data['origin_point'])
+        wb_script += [
+            'wblock',
+            '"C:\\Users\\Public\\%s.dwg"'%floor_name,
+            '"%s"'%floor_name
+        ]
     
     # print(len(block_points))
     # for block_point in block_points:
@@ -365,7 +372,16 @@ def makeFloorBlocks(params):
     static_dir = 'static'
     output_file_path = os.path.join(static_dir, output_file_name)
     doc.saveas(output_file_path)
-    return output_file_path.replace('static', 'files')
+
+    output_script_name = raw_file_name.split('.')[0] + '_wb.scr'
+    output_script_path = os.path.join(static_dir, output_script_name)
+    with open(output_script_path, 'w', encoding='ms949') as f:
+        f.write('\n'.join(wb_script)+'\n')
+
+    return '|'.join([
+        output_file_path.replace('static', 'files'), 
+        output_script_path.replace('static', 'files')
+        ])
 
 # def main():
 leftover = []
