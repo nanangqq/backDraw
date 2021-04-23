@@ -38,6 +38,40 @@ def getDimsFromBox(box):
     
     return dims
 
+def isVertical(axis_NO):
+    major_NO = axis_NO.split('.')[0]
+    try:
+        return type(int(major_NO))==int
+    except:
+        return False
+
+def getDimsFromAxisBlocks(axis_blocks):
+    # print(axis_blocks)
+    dims = Dims()
+
+    for axis_block in axis_blocks.values():
+        # print(axis_block.dxfattribs()['insert'])
+        axis_block_origin = axis_block.dxfattribs()['insert']
+
+        # try:
+        for vent in [vent for vent in axis_block.virtual_entities() if type(vent)==ezdxf.entities.insert.Insert]:
+            axis_NO = vent.get_attrib_text('NO')
+            
+            axis_is_vertical = isVertical(axis_NO)
+            if axis_is_vertical:
+                direction = 'vertical'
+            else:
+                direction = 'horizon'
+
+            vector_from_box_origin = vent.dxfattribs()['insert'] - axis_block_origin
+            dist_from_box_origin = vector_from_box_origin[dims.axisIdxMap[direction]]
+
+            dims.registerAxis(axis_NO, dist_from_box_origin, axis_is_vertical)
+        # except:
+        #     pass
+        # print([[vent.get_attrib_text('NO'), isVertical(vent.get_attrib_text('NO')), vent.dxfattribs()['insert']] for vent in axis_block.virtual_entities() if type(vent)==ezdxf.entities.insert.Insert])
+    return dims
+
 def getBlockNameAndInsertPointAndAttrs(insert):
     if type(insert)==ezdxf.entities.insert.Insert:
         attr = insert.dxfattribs()
@@ -269,13 +303,13 @@ LAYERS_EXCLUDE=[
 ]
 
 def getFloorName(form_dict, floor_idx):
-    return form_dict[floor_idx].get_attrib_text('NAME')
+    return form_dict[floor_idx].get_attrib_text('도면명1')
 
-def getFloorOriginPoint(form_dict, floor_idx, axis_X='1', axis_Y='A'):
-    form_box = form_dict[floor_idx]
-    box_origin = form_box.dxfattribs()['insert']
-    dims = getDimsFromBox(form_box)
-    return dims.getCoords([axis_X, axis_Y])
+# def getFloorOriginPoint(form_dict, floor_idx, axis_X='1', axis_Y='A'):
+#     form_box = form_dict[floor_idx]
+#     # box_origin = form_box.dxfattribs()['insert']
+#     dims = getDimsFromBox(form_box)
+#     return dims.getCoords([axis_X, axis_Y])
 
 
 blockGoChecked = {}
@@ -323,6 +357,12 @@ def genXrefFileName(floor_name):
         return '%02d_%s'%(floor_idx, floor_name.replace(' ', '') + ' ' + '평면도')
     return '%02d_%s'%(floor_idx, floor_name.replace(' ', '')+'평면도')
 
+def getFloorBlockOriginPoint(form_dict, floor_idx, dims, axis_X='1', axis_Y='A'):
+    form_box = form_dict[floor_idx]
+    box_origin = form_box.dxfattribs()['insert']
+    dims.box_origin = box_origin
+    return dims.getCoords([axis_X, axis_Y])
+
 def makeFloorBlocks(params):
     data_path = params['filePath']
     raw_file_name = params['fileName']
@@ -332,14 +372,27 @@ def makeFloorBlocks(params):
     
     form_dict, space_map = getFormDictAndIndex(forms)
 
+
+    axis_blocks = { ent.block().name: ent for ent in ents if 
+        type(ent)==ezdxf.entities.insert.Insert 
+        and ent.block().name in axis_block_names }
+
+    dims = getDimsFromAxisBlocks(axis_blocks)
+    # print(dims.verticals)
+    # print(dims.horizons)
+
+    # 폼별로 블록 기준점 가져오기    
     floor_dict = {}
-    
     for i in range(len(form_dict)):
         floor_name = getFloorName(form_dict, i)
-        floor_origin_point = getFloorOriginPoint(form_dict, i, '1', 'F')
+        # floor_origin_point = getFloorOriginPoint(form_dict, i, '1', 'F')
+        floor_origin_point = getFloorBlockOriginPoint(form_dict, i, dims, '1', 'F')
+        
         floor_dict[floor_name] = {
             'origin_point': floor_origin_point
         }
+
+    # return floor_dict
     
     for ent in ents:
         form_idxes = getIntersectingForms(ent, space_map)
@@ -390,6 +443,7 @@ leftover = []
 leftpaths = []
 block_points = []
 form_block_name = 'NEED_FORM_VER3'
+axis_block_names = ['Axis_1', 'Axis_2', 'Axis_3']
 
 params = json.loads(argv[1])
 
