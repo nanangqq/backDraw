@@ -330,7 +330,6 @@ def makeFloorBlocks(params):
 
     forms = filterForms(ents, form_block_name)
     
-    
     form_dict, space_map = getFormDictAndIndex(forms)
 
     floor_dict = {}
@@ -351,11 +350,8 @@ def makeFloorBlocks(params):
                 floor_dict[intersecting_floor_name]['entities'].append(ent)
             else:
                 floor_dict[intersecting_floor_name]['entities'] = [ent]
-        # else:
-            # print(ent)
-            # print(form_idxes)
-            # print(ent.dxfattribs())
-    
+
+
     wb_script = []
 
     for floor_name, floor_data in floor_dict.items():
@@ -375,12 +371,6 @@ def makeFloorBlocks(params):
             '"%s"'%floor_name
         ]
     
-    # print(len(block_points))
-    # for block_point in block_points:
-    #     msp.add_point(block_point['point'])
-    #     msp.add_text(block_point['block_name'], {'insert':block_point['point'], 'height': 200})
-
-
     output_file_name = '_fl_blocks.'.join(raw_file_name.split('.'))
     static_dir = 'static'
     output_file_path = os.path.join(static_dir, output_file_name)
@@ -396,18 +386,12 @@ def makeFloorBlocks(params):
         output_script_path.replace('static', 'files')
         ])
 
-# def main():
 leftover = []
 leftpaths = []
 block_points = []
-form_block_name = 'plan_dim_box'
-filepath = 'data/20210409_plans.dxf'
+form_block_name = 'NEED_FORM_VER3'
 
-# print(makeFloorBlocks(os.path.join(os.path.dirname(argv[0]), filepath)))
 params = json.loads(argv[1])
-# print(params)
 
 print(makeFloorBlocks(params))
 
-# if __name__=='__main__':
-#     main()
