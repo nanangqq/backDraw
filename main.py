@@ -299,7 +299,10 @@ LAYERS_EXCLUDE=[
     'A-ANNOT',
     'A-WALL-INSUL',
     'A-WALL-PATT',
-    'Defpoints'
+    'Defpoints',
+    '00_REV',
+    '00_CHECK_SIZE',
+    'A-FORM'
 ]
 
 def getFloorName(form_dict, floor_idx):
