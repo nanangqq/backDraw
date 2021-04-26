@@ -323,6 +323,10 @@ def checkEntityGo(ent):
         # print('BLOCK:', block.name)
         if block.name == form_block_name:
             return False
+        elif block.name in {'Axis_1':1,'KM':1,'Axis_2':1,'Axis_Corner':1,'기준점_대지':1,'Axis_3':1,}:
+            return False
+        elif ent.dxfattribs()['layer'] in LAYERS_EXCLUDE:
+            return False
         elif block.name in blockGoChecked:
             return True
         else:
@@ -340,7 +344,10 @@ def checkEntityGo(ent):
 
             blockGoChecked[block.name] = True
             return True
-        
+
+    elif type(ent) in {ezdxf.entities.mtext.MText: 1, ezdxf.entities.text.Text:1}:
+        return False
+
     else:
         if ent.dxfattribs()['layer'] in LAYERS_EXCLUDE:
             return False
@@ -348,7 +355,7 @@ def checkEntityGo(ent):
             return True
 
 def genXrefFileName(floor_name):
-    floors = ['지하 %s층'%i for i in range(7, 0, -1)] + ['지상 %s층'%i for i in range(1, 19)] + ['옥탑', '지붕']
+    floors = ['지하%s층'%i for i in range(7, 0, -1)] + ['지상%s층'%i for i in range(1, 19)] + ['옥탑', '지붕']
     floor_idx_map = { floors[i]: i+1 for i in range(len(floors)) }
     floor = [fl for fl in floors if fl in floor_name]
     if len(floor):
@@ -356,9 +363,10 @@ def genXrefFileName(floor_name):
     else:
         floor_idx = 99
 
-    if floor_name in ['옥탑', '지붕']:
-        return '%02d_%s'%(floor_idx, floor_name.replace(' ', '') + ' ' + '평면도')
-    return '%02d_%s'%(floor_idx, floor_name.replace(' ', '')+'평면도')
+    # if floor_name in ['옥탑', '지붕']:
+    if floor_idx > 25:
+        return '%02d_%s'%(floor_idx, floor_name)
+    return '%02d_%s'%(floor_idx, floor_name.replace(' ', ''))
 
 def getFloorBlockOriginPoint(form_dict, floor_idx, dims, axis_X='1', axis_Y='A'):
     form_box = form_dict[floor_idx]
@@ -388,6 +396,7 @@ def makeFloorBlocks(params):
     floor_dict = {}
     for i in range(len(form_dict)):
         floor_name = getFloorName(form_dict, i)
+        
         # floor_origin_point = getFloorOriginPoint(form_dict, i, '1', 'F')
         floor_origin_point = getFloorBlockOriginPoint(form_dict, i, dims, '1', 'F')
         
@@ -411,6 +420,9 @@ def makeFloorBlocks(params):
     wb_script = []
 
     for floor_name, floor_data in floor_dict.items():
+        if floor_name =='(SGL-00,000)':
+            continue
+
         floor_block = doc.blocks.new(name=floor_name, base_point=floor_data['origin_point'])
         for ent in floor_data['entities']:
             
