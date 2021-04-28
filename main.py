@@ -302,7 +302,8 @@ LAYERS_EXCLUDE=[
     'Defpoints',
     '00_REV',
     '00_CHECK_SIZE',
-    'A-FORM'
+    'A-FORM',
+    'A-SYMB-RN'
 ]
 
 def getFloorName(form_dict, floor_idx):
@@ -423,10 +424,15 @@ def makeFloorBlocks(params):
         if floor_name =='(SGL-00,000)':
             continue
 
-        floor_block = doc.blocks.new(name=floor_name, base_point=floor_data['origin_point'])
+        # floor_block = doc.blocks.new(name=floor_name, base_point=floor_data['origin_point'])
+        floor_block = doc.blocks.new(name=floor_name) # 블록 만들때 기준점 원점으로 변경,, 대신 블록에 넣을 엔터티들을 원점 근처 좌표로 이동시킴
         for ent in floor_data['entities']:
             
             if checkEntityGo(ent):
+                # 블록 잡기 전에 기준점이 원점이 되도록 위치 이동_0428 -> 새로 만든 xref에서 xclip 할 때 좌표 변화 안생기도록,,
+                dx, dy, dz = floor_data['origin_point']
+                ent.translate(-dx, -dy, -dz)
+
                 msp.unlink_entity(ent)
                 floor_block.add_entity(ent)
             else:
