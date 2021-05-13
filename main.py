@@ -363,11 +363,11 @@ def checkEntityGo(ent):
             return True
 
 def genXrefFileName(floor_name):
-    floors = ['지하%s층'%i for i in range(7, 0, -1)] + ['지상%s층'%i for i in range(1, 19)] + ['옥탑', '지붕']
+    floors = ['지하%s층'%i for i in range(7, 0, -1)] + ['지상%s층'%i for i in range(1, 19)] + ['옥탑', '옥탑지붕']
     floor_idx_map = { floors[i]: i+1 for i in range(len(floors)) }
     floor = [fl for fl in floors if fl in floor_name]
     if len(floor):
-        floor_idx = floor_idx_map[floor[0]]
+        floor_idx = floor_idx_map[max(floor)]
     else:
         floor_idx = 99
 
