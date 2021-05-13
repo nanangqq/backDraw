@@ -238,16 +238,23 @@ def getInsertCenter(insert):
         # if block_name == '통기 PD PS Ø150':
             # print([vent for vent in insert.virtual_entities()])
         vents = [vent for vent in insert.virtual_entities() 
-                 if type(vent) != ezdxf.entities.insert.Insert and
-                 type(vent) != ezdxf.entities.circle.Circle and 
+                 if type(vent) != ezdxf.entities.circle.Circle and 
                  type(vent) != ezdxf.entities.arc.Arc and 
-                 type(vent) in centerFunctions]
+                 type(vent) in centerFunctions] # type(vent) != ezdxf.entities.insert.Insert and
+                 # 블록이 해당 도곽 안에 있는지 없는지 체크하는 과정에서, 블록 내부에 있는 요소들의 중심점들을 모아서 평균을 낸
+                 # 점으로 그 블록이 도곽 영역 안에 있는지 판단함.
+                 # 근데, 블록의 삽입 기준점이 멀리 있는 블록이거나, 미러된 블록의 경우, 내부 요소들의 좌표계산이 약간 이상하게 되는 경우가 있음
+                 # 그래서 처음에는 블록이나 호, 원 등을 제외한 요소들만 추려서 점을 계산하고 (호, 원도 블록 안에 들어가 있을 경우 위치 계산할때 뭔가 문제가 있음,,)
+                 # 만약 블록, 호, 원 등을 제외한 요소들의 개수가 너무 적으면 안에 있는 블록을 깨버리는 방식으로 점을 찾아갔었는데
+                 # 블록을 깰 때, 그 블록 안에 (미러된 블록 혹은 사용자정의속성이 있는 블록)이 들어있으면 깼을 때 안에 있던 블록의 회전이나 미러값이 제대로 반영되지 않는 것 같음.
+                 # 일단 지금은 기준점 이상한 블록이(주로 외주업체에서 사용하던 블록,, 배관, 기계 이런 것들) 없다고 가정하고
+                 # 처음 블록의 요소들을 추리는 과정에서 블록도 포함시켜서 진행.. 210513
         # if block_name == '통기 PD PS Ø150':
             # print(vents)
 
         if len(vents):
-            if len(vents)>25:
-                vents = random.choices(vents, k=24)
+            if len(vents)>1: # 25개에서 2개 이상으로 바꿈,,,
+                vents = random.choices(vents, k=1)
             point = sum([getHypoCenter(vent) for vent in vents])/len(vents)
         else:
             insertsInBlock = [ent for ent in block.entity_space.entities if type(ent) == ezdxf.entities.insert.Insert]
@@ -324,7 +331,7 @@ def checkEntityGo(ent):
         # print('BLOCK:', block.name)
         if block.name == form_block_name:
             return False
-        elif block.name in {'Axis_1':1,'KM':1,'Axis_2':1,'Axis_Corner':1,'기준점_대지':1,'Axis_3':1,}:
+        elif block.name in dict(axis_block_names, **{'KM':1,'기준점_대지':1}):
             return False
         elif ent.dxfattribs()['layer'] in LAYERS_EXCLUDE:
             return False
@@ -464,7 +471,7 @@ leftover = []
 leftpaths = []
 block_points = []
 form_block_name = 'NEED_FORM_VER3'
-axis_block_names = ['Axis_1', 'Axis_2', 'Axis_3']
+axis_block_names = {axis_block_name:1 for axis_block_name in ['Axis_1', 'Axis_2', 'Axis_3', 'Axis_4', 'Axis_Corner']}
 
 params = json.loads(argv[1])
 
